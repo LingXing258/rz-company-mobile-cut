@@ -1,17 +1,17 @@
 <template>
    <div id="app">
     <!-- <open></open> -->
-      <down></down>
+      <down1></down1>
      </div>
 </template>
  <script>
 //  import Open from '@/views/newtest/open.vue'
-  import Down from '@/views/newtest/down.vue'
+  import Down1 from '@/views/newtest/down1.vue'
    export default {
      name: 'App',
      components:{
       // Open
-        Down
+        Down1
      }
    }
  </script>

@@ -1,7 +1,7 @@
 <template>
       <div class="container">
       <div class="card-box">
-      <div class="card" ref="card">
+      <div class="card" ref="card" id="card">
          <div class="header">
           <div class="header-left"> 
             <h4>{{name}}</h4>
@@ -15,11 +15,9 @@
          </div>
          <div class="header-body">
          <div class="header-body-top">
-           <div class="header-body-top-over">
-         </div>
          <div class="header-body-top-conpanyname">
                {{companyName}}
-         </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+         </div>
          </div>
          <div class="header-body-bottom">
          <div v-for="itemInfo in userInfo" :key="itemInfo.userName" class="header-body-bottom_item">
@@ -29,27 +27,27 @@
          </div>
           </div>
           <div class="header-footer">
-              <div class="header-footer-img"  ref="getimg" @touchend="toucherQrcode">
+              <div class="header-footer-img"  ref="getimg" @touchstart="toucherQrcode">
              <div class="header-footer-img-qrcode" ref="qrcode">
              </div>
           </div>
          </div>
      </div>
      </div>
-    <!-- <div >
-      {{gaptelephone}}
-    </div> -->
     <div class="hr">
     </div>
     <div class="x-scrllo-box">
-    <div class="x-scrllo-box-inner">  
+      <div class="x-scrllo-box-inner">  
       <div class="x-scrllo-box-inner-item" v-for="itemInfo in userInfo" :key="itemInfo.userName" @click="copy(itemInfo.userName,itemInfo.userValue)" ref="item">
       <div class="content-top"><i class="iconfont" v-html="itemInfo.userIcon"></i><div >{{itemInfo.userName}}&nbsp;</div></div>
        <div class="content-bottom">{{itemInfo.userValue}}</div>
       </div> 
-      </div>
+      <div class="cover"></div>
+       </div>
     </div> 
-    <div class=" hr-second"></div>
+    <div style="width:100px;height: 100px;">
+     <img src="" alt="" ref="img">
+    </div>
      <div class="footer-box"  @touchstart="longTimeTouch" id="down">
       <div class="footer-box-buttom" >
         <a>保存名片</a><i class="iconfont">&#xe8b0;</i>
@@ -61,8 +59,8 @@
 import html2canvas from 'html2canvas'
 import  QRCode  from 'qrcodejs2'
 import { ImagePreview } from "vant";
-import { userInfo } from  '@/utils/user'
-// import fff from '@/utils/baseAxios'
+import { getCardInfo } from  '@/utils/user.js'
+// import eruda from 'eruda'
 export default {
      name: 'App',
      data() {
@@ -78,7 +76,8 @@ export default {
          {userName:'网址',userValue: 'http://www.lyguohongtouzi.com',userIcon:"&#xe61f;"},
          {userName:'地址',userValue: '洛阳市洛龙区开元大道218号洛阳日报社报业集团6层',userIcon:"&#xe624;" },
         ],
-        userTelePhone: '13422098792',
+        // userTelePhone: '13422098792',
+         userTelePhone: '15218677715',
         imgurl:'',
         imglist:[],
         cardSrc:'',
@@ -90,35 +89,47 @@ export default {
      },
     mounted() {
         this.createQrCode();
+        // this.init()
      },
     computed: {
      gaptelephone:function(){
-      // let res =  this.userTelePhone.replace(/^(.{3})(.*)(.{4})$/, '$1 $2 $3')
-      let handleTele =  this.userTelePhone.replace(/^(.{3})(.{3})(.{3})(.*)$/, '$1 $2 $3 $4')
-      return handleTele
+      if(!this.userTelePhone) {
+       return
+     }else {
+       let phone_reg=new RegExp(/^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$/) //固定电话
+      if(!(phone_reg.test(this.userTelePhone))){
+          let handleTele = (this.userTelePhone).replace(/^(.{3})(.{3})(.{3})(.*)$/, '$1 $2 $3 $4') //手机号处理
+          console.log(handleTele)
+          return handleTele
+      }else{
+        console.log(this.userTelePhone)
+            return this.userTelePhone
+      }   
      }
+    }
     },
      methods:{
+      // init() {
+      //   eruda.init() 
+      // },
      async getUserInfo() {
-      const  { data } = await userInfo({
+      const  { data } = await getCardInfo({
         method: 'post',
         url:'/role/saveOrUpdate'
        })
        console.log(data)
       },
       toucherQrcode() {
-         this.preventEventDoing=true;
+        this.preventEventDoing=true;
          this.imglist = [];
          this.imglist.push(this.src);
-         console.log(this.imglist);
          ImagePreview({
           images:this.imglist,
           showIndicators:false,
           showIndex:false,
           closeable:true,
           closeIconPosition:'top-right',
-         }
-         )
+         })
       },
        createQrCode(){
         const userurl=this.userUrl
@@ -132,30 +143,38 @@ export default {
         }
         let qrcode = new QRCode(this.$refs.qrcode,qrcodeConfig);
         this.src = qrcode._oDrawing._elCanvas.toDataURL("image/png");
-        console.log(this.src)
       },
       longTimeTouch() {
        html2canvas(this.$refs.card,{
-       allowTaint: true,
+        backgroundColor: "null",
        scale: window.devicePixelRatio,  //像素比
-       useCORS: true,  
+       useCORS: true,
         dpi: 300,
        color:'#fffff',  //允许服务器图片
-       backgroundColor: "#FFFFF",
+      //  backgroundColor: "#FFFFF",
        logging: false,
-        width: this.$refs.offsetWidth, //设置canvas尺寸与所截图尺寸相同，防止白边
-       height:this.$refs.offsetHeight //防止白边
-       }).then(canvas => {
-        // this.preventEventDoing=false
-        // const Base64 = canvas.toDataURL('img/png')
-        const dd=canvas.toDataURL('img/png')
-        
-        console.log(dd)
+        width: this.$refs.card.offsetWidth, //设置canvas尺寸与所截图尺寸相同，防止白边
+       height:this.$refs.card.offsetHeight //防止白边
+       }).then(canvas => { 
         const myBlob =this.dataURLtoBlob(canvas.toDataURL('img/png')) // canvas转base64 转 blob
-        console.log(myBlob)
-        const myUrl = URL.createObjectURL(myBlob)  // blob转URL对象
-         console.log(myUrl)
+       const myUrl = URL.createObjectURL(myBlob)  // blob转URL对象
         this.downImg(myUrl)  // 创建a标签，下载图片
+        // let getbody= document.getElementsByTagName('body')[0]
+        //   getbody.style.padding='8px',
+        //   getbody.style.boxSizing="border-box"
+        //   getbody.style.width='100%'
+        //   getbody.style.height=this.$refs.card.style.height
+        //   canvas.toDataURL('img/png',1)
+        //   getbody.append(canvas);
+//         html2canvas(canvas).then(res => {
+//        try {
+//       const myBlob =this.dataURLtoBlob(res.toDataURL('img/png')) // canvas转base64 转 blob
+//       const myUrl = URL.createObjectURL(myBlob)  // blob转URL对象
+//        this.downImg(myUrl)  // 创建a标签，下载图片
+//      }catch(e){
+//       return 
+//   }
+// })   
 });
       },
    convertCanvasToImg(canvas) {
@@ -185,12 +204,10 @@ export default {
 
   // 创建a标签 并设置其相关属性，最后触发其点击事件
   // let b= document.getElementById('img')
-  // b.src=url;
+  // b.src=url
+    //      console.log(img1)
    const timestamp = Date.now().toString();
-   if(this.preventEventDoing){
-    return
-   }
-  let a = document.createElement("a")
+  var a = document.createElement("a")
 
   // let clickEvent = document.createEvent("MouseEvents");
   
@@ -204,8 +221,7 @@ export default {
   clickEvent.initEvent('click', true, true)
 
   a.dispatchEvent(clickEvent);
-  let b =document.getElementById('aId')
-  console.log(b)
+  
 },
     // 这个方法会将渲染好的图片在新页面打开。
 async copy(name,value) {
@@ -230,6 +246,7 @@ html,h4,p {
   margin: 0;
   padding:0;
 }
+body{font-family:Helvetica;}
 .container {
   position: absolute;
   left: 0;
@@ -243,7 +260,8 @@ html,h4,p {
 .container .card-box {
    padding: 8px;
    position: relative;
-  background-color: #FFFFFF;
+   background-color: #FFFFFF;
+  overflow: hidden;
 }
 .container .card-box::after{
   position: absolute;
@@ -258,14 +276,15 @@ html,h4,p {
  }
  .container .card-box .card {
   width: 100%;
-  background-image: url(../../assets/5.jpg);
+  background-image: url(../../assets/9.jpg);
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size:cover;
   border-radius: 10px;
   box-sizing: border-box;
   position: relative;
-  border-bottom: 1px solid rgba(0,0,0,0.7);
   overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.2);
+  color: rgba(0,0,0,0.7);;
 } 
 .container .card-box .card .header {
   display: flex;
@@ -278,7 +297,7 @@ html,h4,p {
 }
 .container .card-box .card .header .header-left h4{
    /* color:rgba(0,0,0,0.7); */
-   color:#FAFAFA;
+   /* color:#FAFAFA; */
    font-size: 20px;
   padding-bottom: 2px;
   /* transform: scale(0.8,1.0); */
@@ -291,7 +310,7 @@ html,h4,p {
    transform: scale(0.8,0.9);
    display: inline-block;
    transform-origin:left;
-    color:#FAFAFA;
+    /* color:#FAFAFA; */
 }
 .container .card-box .card .header .header-right { 
   box-sizing: border-box;      
@@ -314,52 +333,42 @@ html,h4,p {
 }
 .container .card-box .card .header-body {
   font-size: 20px;
-  padding: 5px 0px 12px 20px;
+  padding: 0px 23px 0px 20px;
   color: #F6F6F6;
 }
-.container .card-box .card .header-body-top {
-  /* padding: 8px 30px 0px 45px; */
+.container .card-box .card .header-body .header-body-top {
+  padding: 0px 0px 0px 120px;
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-bottom: -9px;
-}
-.container .card .header-body .header-body-top .header-body-top-over {
-   flex: 1;
-   width:5px;
-   height:5px;
+  justify-content: flex-end;
 }
 .container .card .header-body .header-body-top .header-body-top-conpanyname {
-   display: block;
-   font-size: 20px;
-   color: #F6F6F6;
-   transform: scale(0.6,0.7);
-  transform-origin: right;
+   font-size: 12px;
+   color: rgba(0,0,0,0.9);
 }
 .container .card .header-body .header-body-bottom {
-  width: 160%;
+  font-size: 8px;
+  /* color: rgba(237, 223, 223, 0.96); */
+   padding-right: 70px;
+   padding-top: 10px;
+
 }
 .container .card .header-body .header-body-bottom .header-body-bottom_item {
-   transform: scale(0.4,0.5);
-   transform-origin:left;
-   color: #ffff;
    display: flex;
+   /* justify-content: flex-start; */
    align-items: center;
-   margin: -11px 0px;
+   margin: 1px 0px;
+   font-size: 10px;
+   word-break: break-word;
 }
-.container .card .header-body .header-body-bottom .header-body-bottom_item .userValue {
-   /* width: 100%; */
-    transform: scale(1.1,1);
-    text-indent:0px;
-    transform-origin:left;
+.container .card .header-body .header-body-bottom .header-body-bottom_item:nth-child(3) .userValue{
+ 
 }
-.container .card .header-body .header-body-bottom .header-body-bottom_item :first-child{
-  padding: 0 0 1.5px 0;
+.container .card .header-body .header-body-bottom .header-body-bottom_item .common-icon{
+   transform: scale(0.8,0.8);
+   transform-origin:right;
+   font-size: 2px;
 }
-.container .card .header-body .header-body-bottom .header-body-bottom_item :last-child .userValue{
-   transform: scale(1,1);
-   text-indent:0px;
-}
+
 .container .card .header-footer {
   padding: 0px 10px 20px 18px;
   display: flex;
@@ -379,6 +388,7 @@ html,h4,p {
 .container .card .header-footer-img .header-footer-img-qrcode img{
   width: 100%;
   height:100%;
+  touch-action: none
 }
 .container .hr {
   width: 100%;
@@ -389,19 +399,31 @@ html,h4,p {
    height: 100px;
    width: 100%;
    overflow-x: auto;
+   overflow-y: hidden;
    background-color: #FFFFFF;
  }
 .x-scrllo-box  .x-scrllo-box-inner{
+   position: relative;
    box-sizing: border-box;
    padding: 10px 10px 0 10px;
    width: 150%;
    border: 0px;
+   height: 100%;
      }
+.x-scrllo-box .x-scrllo-box-inner::after {
+   position: absolute;
+    content: '';
+    height: 5px;
+    display: block;
+    bottom: 0px;
+    width: 100%;
+    left: 0;
+    background-color: #f3eeee;
+  }
 .x-scrllo-box .x-scrllo-box-inner .x-scrllo-box-inner-item {
    float: left;
    width: 23%;
    box-sizing: border-box;
-   /* background-color: #e0925a; */
    margin-right: 10px;
    border-radius:6px;
    display: flex;
@@ -416,7 +438,7 @@ html,h4,p {
      margin-right: 0px;
      }
 .x-scrllo-box::-webkit-scrollbar {
-      width: 0 !important
+     background-color: #f3eeee;
      }
  .x-scrllo-box .x-scrllo-box-inner .x-scrllo-box-inner-item .content-top{
        display: flex;
@@ -426,6 +448,7 @@ html,h4,p {
        }
 .x-scrllo-box .x-scrllo-box-inner .x-scrllo-box-inner-item .content-top div {
          margin-left: 5px;
+        transform: scale(1,1);
          }
 .x-scrllo-box .x-scrllo-box-inner .x-scrllo-box-inner-item:nth-child(1) i{
 color: rgb(35, 126, 223);
@@ -443,6 +466,8 @@ color: rgb(77, 42, 165);
       text-overflow: ellipsis;
       white-space:nowrap;
       color: rgba(0, 0, 0, 0.8);
+        transform: scale(1,1);
+
    }
 .footer-box {
   height: 70px;
@@ -454,6 +479,7 @@ color: rgb(77, 42, 165);
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
+  
   /* background-color: #FFFFFF; */
 }
 .footer-box .footer-box-buttom {
@@ -461,7 +487,8 @@ color: rgb(77, 42, 165);
   height: 18px;
   padding: 15px 40px;
   border-radius: 50px;
-  background-color: rgba(16, 31, 236, 0.914);
+  /* background-color: rgba(16, 31, 236, 0.914); */
+  background-color: #0061B1;
   margin: 0px auto;
   justify-content:center;
   align-items: center;

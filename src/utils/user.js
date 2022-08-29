@@ -1,5 +1,4 @@
-import createAxios from '@/utils/baseAxios'
-let userInfo = function (data){
-  return  createAxios(data)
+import request from '@/utils/request'
+export const getCardInfo=function(data) {
+    return request(data)
 }
-export { userInfo  }
